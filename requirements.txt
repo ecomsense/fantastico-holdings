@@ -1,0 +1,13 @@
+wheel
+setuptools
+PyYAML
+pyOpenssl
+pandas
+pendulum
+pyotp
+xlrd
+requests
+websocket_client
+git+https://github.com/pannet1/kiteext
+git+https://github.com/pannet1/toolkit
+git+https://github.com/ecomsense/stock-brokers
