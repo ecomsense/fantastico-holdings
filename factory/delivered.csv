@@ -1,1 +1,2 @@
-Exch,Symbol,Reward,Qty,Bdate,Bprice,Ltp
+Symbol,Qty,Bdate,Bprice,Reward,Ltp,Exch
+SBIN,1,2025-05-21 14:29:24.620701+05:30,786.6,818.0640000000001,786.75,NSE

@@ -1,0 +1,2 @@
+,tradingsymbol,exchange,instrument_token,isin,product,price,quantity,used_quantity,t1_quantity,realised_quantity,authorised_quantity,authorised_date,authorisation,opening_quantity,short_quantity,collateral_quantity,collateral_type,discrepancy,average_price,last_price,close_price,pnl,day_change,day_change_percentage,mtf
+0,SBIN,NSE,779521,INE062A01020,CNC,0,1,0,0,1,0,2025-05-26 00:00:00,{},1,0,0,,False,786.55,793.8,790.5,7.25,3.2999999999999545,0.41745730550284055,"{'quantity': 0, 'used_quantity': 0, 'average_price': 0, 'value': 0, 'initial_margin': 0}"
