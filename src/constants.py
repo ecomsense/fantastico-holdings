@@ -15,7 +15,7 @@ O_FUTL = Fileutils()
 S_DATA = "../data/"
 S_LOG = S_DATA + "log.txt"
 
-STOCKS_IN_PLAY = S_DATA + "stocks.xls"
+STOCKS_IN_PLAY = S_DATA + "stocks.csv"
 DELIVERED = S_DATA + "delivered.csv"
 HISTORY = S_DATA + "history.csv"
 
@@ -121,7 +121,7 @@ logging = set_logger()
 def create_json_file(exchange):
     json_file = f"{S_DATA}{exchange}.json"
     if not O_FUTL.is_file_exists(json_file):
-        O_FUTL.create_file(json_file)
+        print(f"creating file {json_file}")
 
 
 exchanges = ["NSE", "BSE"]

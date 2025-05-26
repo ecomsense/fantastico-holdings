@@ -78,8 +78,7 @@ def main():
         stop = O_SETG["program"].pop("stop")
         while not is_time_past(stop):
             new_ltps = change_key(ws._ltp)
-            print("new_ltps", new_ltps)
-            obj.run(new_ltps)
+            # obj.run(new_ltps)
         else:
             obj.save_dfs()
             timer(5)
