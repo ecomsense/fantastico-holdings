@@ -8,6 +8,33 @@ from typing import Any, Dict, List
 from wsocket import Wsocket
 import pandas as pd
 
+from typing import List, Dict, Any
+import pandas as pd
+
+def get_tokens_from_symbols2(obj) -> List[Dict[Any, Any]]:
+    """
+    Returns instrument details from strategy by combining stock dataframes
+    (only Symbol and Exch columns) and grouping by exchange.
+    """
+    tokens_and_tradingsymbols = []
+    df1 = obj.df_stocks_in_play
+    df2 = obj.df_delivered
+
+    # Extract only common relevant columns
+    common_cols = ['Symbol', 'Exch']
+    df1_filtered = df1[common_cols] if not df1.empty else pd.DataFrame(columns=common_cols)
+    df2_filtered = df2[common_cols] if not df2.empty else pd.DataFrame(columns=common_cols)
+
+    # Combine both
+    df_combined = pd.concat([df1_filtered, df2_filtered], ignore_index=True)
+
+    print("\nSUBSCRIBING LIST\n", df_combined, "\n")
+
+    if not df_combined.empty:
+        exch_sym = df_combined.groupby("Exch")["Symbol"].apply(list).to_dict()
+        tokens_and_tradingsymbols.append(exch_sym)
+
+    return tokens_and_tradingsymbols
 
 def get_tokens_from_symbols(obj: Fantastico) -> List[Dict[Any, Any]]:
     """
