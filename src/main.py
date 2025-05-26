@@ -13,6 +13,7 @@ def get_tokens_from_symbols(obj: Fantastico) -> List[Dict[Any, Any]]:
     """
     returns instruments details from strategy
     """
+
     tokens_and_tradingsymbols = []
     df1 = obj.df_stocks_in_play
     df2 = obj.df_delivered
@@ -23,7 +24,7 @@ def get_tokens_from_symbols(obj: Fantastico) -> List[Dict[Any, Any]]:
     else:
         df = pd.concat([df1, df2])
 
-    print("SUBSCRIBING LIST", df)
+    print("SUBSCRIBING LIST \n", df)
     if len(df.index) > 0:
         # df = df.reset_index(names="Symbol")
         exch_sym = df.groupby("Exch")["Symbol"].apply(list).to_dict()

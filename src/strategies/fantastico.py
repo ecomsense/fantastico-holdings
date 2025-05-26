@@ -18,30 +18,26 @@ def df_fm_file(file, columns=[], index_col="Symbol"):
 
 
 class Fantastico:
-    _prices = {}
-    df_delivered = pd.DataFrame()
 
     def __init__(self):
+        self._prices = {}
         stocks_columns = ["Exch", "Qty"]
         self.df_stocks_in_play = df_fm_file(STOCKS_IN_PLAY, stocks_columns)
-        self.df_stocks_in_play.index = self.df_stocks_in_play.index.astype(str)
         self.df_stocks_in_play["Ltp"] = 0
-        print("\n" + "FROM EXCEL")
-        print(self.df_stocks_in_play)
-
-        # self.df_delivered = df_fm_file(DELIVERED)
-        self.df_delivered = pd.read_csv(DELIVERED)
-        print("\n DELIVERED")
-        print(self.df_delivered)
-        lst_pos = self.df_delivered.index.to_list()
+        print("FROM EXCEL \n", self.df_stocks_in_play, "\n")
 
         # drop self.df_stocks_in_play index  if it is in lst_pos
+        df = df_fm_file(DELIVERED)
+        lst_pos = df.index.to_list()
         self.df_stocks_in_play = self.df_stocks_in_play[
             ~self.df_stocks_in_play.index.isin(lst_pos)
         ]
-        print("\n FINAL LIST")
-        print(self.df_stocks_in_play)
+        print("\n NEW STOCK TO ENTER \n", self.df_stocks_in_play, "\n")
+
+        self.df_delivered = pd.read_csv(DELIVERED)
+        print("\n DELIVERED \n", self.df_delivered, "\n")
         timer(2)
+
         self.fn = (
             self.exit_beyond_band
             if self.df_stocks_in_play.empty
