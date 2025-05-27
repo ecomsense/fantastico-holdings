@@ -11,7 +11,7 @@ import pandas as pd
 from typing import List, Dict, Any
 import pandas as pd
 
-def get_tokens_from_symbols2(obj) -> List[Dict[Any, Any]]:
+def get_tokens_from_symbols(obj) -> List[Dict[Any, Any]]:
     """
     Returns instrument details from strategy by combining stock dataframes
     (only Symbol and Exch columns) and grouping by exchange.
@@ -32,29 +32,6 @@ def get_tokens_from_symbols2(obj) -> List[Dict[Any, Any]]:
 
     if not df_combined.empty:
         exch_sym = df_combined.groupby("Exch")["Symbol"].apply(list).to_dict()
-        tokens_and_tradingsymbols.append(exch_sym)
-
-    return tokens_and_tradingsymbols
-
-def get_tokens_from_symbols(obj: Fantastico) -> List[Dict[Any, Any]]:
-    """
-    returns instruments details from strategy
-    """
-
-    tokens_and_tradingsymbols = []
-    df1 = obj.df_stocks_in_play
-    df2 = obj.df_delivered
-    if df1.empty:
-        df = df2.reset_index()
-    elif df2.empty:
-        df = df1.reset_index()
-    else:
-        df = pd.concat([df1, df2])
-
-    print("SUBSCRIBING LIST \n", df)
-    if len(df.index) > 0:
-        # df = df.reset_index(names="Symbol")
-        exch_sym = df.groupby("Exch")["Symbol"].apply(list).to_dict()
         for exchange, tsym in exch_sym.items():
             lst = Equity(exchange).find_token_from_tradingsymbol(tsym)
             if any(lst):
@@ -106,7 +83,7 @@ def main():
         stop = O_SETG["program"].pop("stop")
         while not is_time_past(stop):
             new_ltps = change_key(ws._ltp)
-            # obj.run(new_ltps)
+            obj.run(new_ltps)
         else:
             obj.save_dfs()
             timer(5)
