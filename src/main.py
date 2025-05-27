@@ -18,6 +18,7 @@ def get_tokens_from_symbols(obj) -> List[Dict[Any, Any]]:
     """
     tokens_and_tradingsymbols = []
     df1 = obj.df_stocks_in_play
+    df1.reset_index()
     df2 = obj.df_delivered
 
     # Extract only common relevant columns
