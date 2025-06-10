@@ -159,7 +159,7 @@ class Fantastico:
                             "Symbol": row["Symbol"],
                         }
                         if self.add_position(**dct):
-                            df_new = pd.DataFrame(dct, columns=COLS_DELIVERED)
+                            df_new = pd.DataFrame([dct], columns=COLS_DELIVERED)
                             self.df_delivered = pd.concat(
                                 [self.df_delivered, df_new], ignore_index=True
                             )
@@ -177,7 +177,7 @@ class Fantastico:
                             "Symbol": row["Symbol"],
                         }
                         if self.add_position(**dct):
-                            df_new = pd.DataFrame(dct, columns=COLS_DELIVERED)
+                            df_new = pd.DataFrame([dct], columns=COLS_DELIVERED)
                             self.df_delivered = pd.concat(
                                 [self.df_delivered, df_new], ignore_index=True
                             )

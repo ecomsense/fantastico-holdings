@@ -59,8 +59,11 @@ class Helper:
             default_dict = make_default_order()
             kwargs.update(default_dict)
             logging.debug(str(kwargs))
+            """
             resp = cls._api.order_place(**kwargs)
             return resp
+            """
+            return True
         except Exception as e:
             message = f"helper error {e} while placing order"
             logging.error(message)
