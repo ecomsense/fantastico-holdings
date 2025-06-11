@@ -116,11 +116,11 @@ class Fantastico:
                 "SPrice",
                 "Exch",
             ]
-            rows_to_drop, rows_to_add, lst_of_dct = [], [], []
             self.df_delivered = pd.read_csv(DELIVERED)
             if not self.df_delivered.empty:
                 self.df_delivered["Ltp"] = self.df_delivered["Symbol"].map(self._prices)
             for idx, row in self.df_delivered.iterrows():
+                rows_to_drop, rows_to_add, lst_of_dct = [], [], []
                 Ltp = row["Ltp"]
                 if Ltp >= row["Reward"]:
                     resp = Helper.place_order(
