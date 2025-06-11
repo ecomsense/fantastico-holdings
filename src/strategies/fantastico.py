@@ -5,6 +5,7 @@ from toolkit.kokoo import timer
 import pendulum as pdlm
 
 COLS_DELIVERED = ["Symbol", "Qty", "Bdate", "Bprice", "Reward", "Ltp", "Exch"]
+REWARD_PERC = REWARD_PERC
 
 
 def df_fm_file(file, columns=[], index_col="Symbol"):
@@ -149,7 +150,7 @@ class Fantastico:
                             "Qty": int(row["Qty"]),
                             "Bdate": pdlm.now(),
                             "Bprice": Ltp,
-                            "Reward": Ltp + (Ltp * 4 / 100),
+                            "Reward": Ltp + (Ltp * REWARD_PERC),
                             "Ltp": Ltp,
                             "Symbol": row["Symbol"],
                         }
@@ -157,13 +158,13 @@ class Fantastico:
                             # to be added to the df
                             rows_to_add.append(dct)
                             break
-                    elif Ltp < row["Bprice"] - (row["Bprice"] * 0.04):
+                    elif Ltp < row["Bprice"] - (row["Bprice"] * REWARD_PERC):
                         dct = {
                             "Exch": row["Exch"],
                             "Qty": int(row["Qty"]),
                             "Bdate": pdlm.now(),
                             "Bprice": Ltp,
-                            "Reward": Ltp + (Ltp * 4 / 100),
+                            "Reward": Ltp + (Ltp * REWARD_PERC),
                             "Ltp": Ltp,
                             "Symbol": row["Symbol"],
                         }
