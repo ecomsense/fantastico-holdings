@@ -5,7 +5,7 @@ from toolkit.kokoo import timer
 import pendulum as pdlm
 
 COLS_DELIVERED = ["Symbol", "Qty", "Bdate", "Bprice", "Reward", "Ltp", "Exch"]
-REWARD_PERC = REWARD_PERC
+REWARD_PERC = 0.05  # 5 percent
 
 
 def df_fm_file(file, columns=[], index_col="Symbol"):
