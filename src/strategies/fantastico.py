@@ -106,12 +106,23 @@ class Fantastico:
 
     def exit_beyond_band(self):
         try:
+            columns = [
+                "Symbol",
+                "Qty",
+                "Bdate",
+                "Bprice",
+                "Reward",
+                "SDate",
+                "SPrice",
+                "Exch",
+            ]
+            rows_to_drop, rows_to_add, lst_of_dct = [], [], []
             self.df_delivered = pd.read_csv(DELIVERED)
             if not self.df_delivered.empty:
                 self.df_delivered["Ltp"] = self.df_delivered["Symbol"].map(self._prices)
-            rows_to_drop, lst_of_dct = [], []
             for idx, row in self.df_delivered.iterrows():
-                if row["Ltp"] >= row["Reward"]:
+                Ltp = row["Ltp"]
+                if Ltp >= row["Reward"]:
                     resp = Helper.place_order(
                         symbol=row["Symbol"],
                         exchange=row["Exch"],
@@ -119,8 +130,6 @@ class Fantastico:
                         side="SELL",
                     )
                     if resp:
-                        print("squared off")
-                        Ltp = row["Ltp"]
                         dct = {
                             "Symbol": row["Symbol"],
                             "Qty": row["Qty"],
@@ -131,24 +140,10 @@ class Fantastico:
                             "SPrice": Ltp,
                             "Exch": row["Exch"],
                         }
+                        # to be added to the history
                         lst_of_dct.append(dct)
-                        columns = [
-                            "Symbol",
-                            "Qty",
-                            "Bdate",
-                            "Bprice",
-                            "Reward",
-                            "SDate",
-                            "SPrice",
-                            "Exch",
-                        ]
-                        df_new = pd.DataFrame(lst_of_dct, columns=columns)
-                        df_new.to_csv(HISTORY, mode="a", index=False, header=False)
-
+                        # to be dropped from delivered
                         rows_to_drop.append(idx)
-                        self.df_delivered = self.df_delivered[
-                            ~self.df_delivered["Bdate"].isin(rows_to_drop)
-                        ]
                         dct = {
                             "Exch": row["Exch"],
                             "Qty": int(row["Qty"]),
@@ -159,14 +154,10 @@ class Fantastico:
                             "Symbol": row["Symbol"],
                         }
                         if self.add_position(**dct):
-                            df_new = pd.DataFrame([dct], columns=COLS_DELIVERED)
-                            self.df_delivered = pd.concat(
-                                [self.df_delivered, df_new], ignore_index=True
-                            )
-                            self.save_dfs()
+                            # to be added to the df
+                            rows_to_add.append(dct)
                             break
-                    elif row["Ltp"] < row["Bprice"] - (row["Bprice"] * 0.04):
-                        Ltp = row["Ltp"]
+                    elif Ltp < row["Bprice"] - (row["Bprice"] * 0.04):
                         dct = {
                             "Exch": row["Exch"],
                             "Qty": int(row["Qty"]),
@@ -177,13 +168,23 @@ class Fantastico:
                             "Symbol": row["Symbol"],
                         }
                         if self.add_position(**dct):
-                            df_new = pd.DataFrame([dct], columns=COLS_DELIVERED)
-                            self.df_delivered = pd.concat(
-                                [self.df_delivered, df_new], ignore_index=True
-                            )
-                            self.save_dfs()
+                            rows_to_add.append(dct)
                             break
 
+            if lst_of_dct and rows_to_drop:
+                # if lst_of dct
+                df_new = pd.DataFrame(lst_of_dct, columns=columns)
+                df_new.to_csv(HISTORY, mode="a", index=False, header=False)
+                # if rows_to_drop:
+                self.df_delivered.drop(rows_to_drop, inplace=True)
+                self.save_dfs()
+
+            if rows_to_add:
+                df_new_rows = pd.DataFrame(rows_to_add, columns=COLS_DELIVERED)
+                self.df_delivered = pd.concat(
+                    [self.df_delivered, df_new_rows], ignore_index=True
+                )
+                self.save_dfs()
         except Exception as e:
             print(f"{e} exit beyond band")
 
