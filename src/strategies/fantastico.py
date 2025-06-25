@@ -4,13 +4,13 @@ from helper import Helper
 from toolkit.kokoo import timer
 import pendulum as pdlm
 
-COLS_DELIVERED = ["Symbol", "Qty", "Bdate", "Bprice", "Reward", "Ltp", "Exch"]
+COLS_DELIVERED = ["Symbol", "Qty", "Bdate", "Bprice", "Stoploss", "Ltp", "Exch"]
 HIST_COLS = [
     "Symbol",
     "Qty",
     "Bdate",
     "Bprice",
-    "Reward",
+    "Stoploss",
     "SDate",
     "SPrice",
     "Exch",
@@ -67,14 +67,13 @@ class Fantastico:
                 )
                 resp = Helper.place_order(**kwargs)
                 if resp:
-                    print("enter")
                     Ltp = row["Ltp"]
                     dct = {
                         "Exch": row["Exch"],
                         "Qty": int(row["Qty"]),
                         "Bdate": pdlm.now(),
                         "Bprice": Ltp,
-                        "Reward": Ltp - (Ltp * REWARD_PERC),
+                        "Stoploss": Ltp - (Ltp * REWARD_PERC),
                         "Ltp": Ltp,
                         "Symbol": idx,
                     }
@@ -92,8 +91,8 @@ class Fantastico:
             self.df_delivered = pd.DataFrame(lst_of_dct, columns=COLS_DELIVERED)
             self.df_delivered.to_csv(DELIVERED, index=False, header=True)
         else:
-            df_new = pd.DataFrame(lst_of_dct, columns=COLS_DELIVERED)
-            df_new.to_csv(DELIVERED, mode="a", index=False, header=False)
+            self.df_delivered = pd.DataFrame(lst_of_dct, columns=COLS_DELIVERED)
+            self.df_delivered.to_csv(DELIVERED, mode="a", index=False, header=False)
 
     def save_dfs(self):
         is_empty = True if self.df_delivered.empty else False
@@ -111,67 +110,35 @@ class Fantastico:
             return True
         return False
 
-    def remove_me(self):
-        # Create a copy with only last rows per symbol
-        df_latest = (
-            self.df_delivered.groupby("Symbol", as_index=False)
-            .tail(1)
-            .reset_index(drop=True)
-        )
-        for idx, row in df_latest.iterrows():
-            rows_to_drop, lst_of_dct = [], []
-            Ltp = row["Ltp"]
-            if Ltp >= row["Reward"]:
+    def exit_on_profit(self, df: pd.DataFrame) -> bool:
+        try:
+            symbol = df["Symbol"].iloc[0]  # all rows are of same symbol
+            total_qty = df["Qty"].sum()
+            total_amount = (df["Bprice"] * df["Qty"]).sum()
+            average = total_amount / total_qty
+
+            ltp = df["Ltp"].iloc[-1]
+            exch = df["Exch"].iloc[-1]
+            target = average + (average * REWARD_PERC)
+            if ltp > target:
                 resp = Helper.place_order(
-                    symbol=row["Symbol"],
-                    exchange=row["Exch"],
-                    quantity=row["Qty"],
+                    symbol=symbol,
+                    exchange=exch,
+                    quantity=total_qty,
                     side="SELL",
                 )
                 if resp:
-                    dct = {
-                        "Symbol": row["Symbol"],
-                        "Qty": row["Qty"],
-                        "Bdate": row["Bdate"],
-                        "Bprice": row["Bprice"],
-                        "Reward": row["Reward"],
-                        "SDate": pdlm.now(),
-                        "SPrice": Ltp,
-                        "Exch": row["Exch"],
-                    }
-                    # to be added to the history
-                    lst_of_dct.append(dct)
-                    # to be dropped from delivered
-                    rows_to_drop.append(idx)
-
-            if lst_of_dct and rows_to_drop:
-                # if lst_of dct
-                df_new = pd.DataFrame(lst_of_dct, columns=HIST_COLS)
-                df_new.to_csv(HISTORY, mode="a", index=False, header=False)
-                # if rows_to_drop:
-                self.df_delivered.drop(rows_to_drop, inplace=True)
-                self.save_dfs()
-
-    def exit_on_profit(self, df: pd.DataFrame) -> bool:
-        symbol = df["Symbol"].iloc[0]  # all rows are of same symbol
-        avg_bprice = df["Bprice"].mean()
-        total_qty = df["Qty"].sum()
-        ltp = df["Ltp"].iloc[-1]
-        exch = df["Exch"].iloc[-1]
-
-        if ltp > avg_bprice:
-            resp = Helper.place_order(
-                symbol=symbol,
-                exchange=exch,
-                quantity=total_qty,
-                side="SELL",
+                    df["SDate"] = pdlm.now()
+                    df["SPrice"] = ltp
+                    df.to_csv(HISTORY, mode="a", index=False, header=False)
+                    return True
+            logging.info(
+                f"{symbol} - LTP {ltp:.2f} above target {target:.2f} (Avg: {average:.2f}) → Not Reached"
             )
-            if resp:
-                df["SDate"] = pdlm.now()
-                df["SPrice"] = ltp
-                df.to_csv(HISTORY, mode="a", index=False, header=False)
-                return True
-        return False
+            return False
+        except Exception as e:
+            logging.error(f"{e} while exiting on profit")
+            return False
 
     def enter_on_loss(self):
         # Create a copy with only last rows per symbol
@@ -183,19 +150,22 @@ class Fantastico:
         rows_to_add = []
         for _, row in df_latest.iterrows():
             Ltp = row["Ltp"]
-            if Ltp < row["Reward"]:
+            if Ltp < row["Stoploss"]:
                 dct = {
                     "Exch": row["Exch"],
                     "Qty": int(row["Qty"]),
                     "Bdate": pdlm.now(),
                     "Bprice": Ltp,
-                    "Reward": Ltp + (Ltp * REWARD_PERC),
+                    "Stoploss": Ltp - (Ltp * REWARD_PERC),
                     "Ltp": Ltp,
                     "Symbol": row["Symbol"],
                 }
                 if self._place_buy_order(**dct):
                     rows_to_add.append(dct)
                     return rows_to_add
+            logging.info(
+                f"{row['Symbol']} - LTP {Ltp:.2f} below stoploss {row['Stoploss']:.2f} Not Reached"
+            )
 
     def process_cnc(self):
         try:
@@ -228,9 +198,57 @@ class Fantastico:
         # update dataframe with price from dictionary with df.index as key
         try:
             self._prices = prices
+            """
             print("\n DELIVERED")
             print(self.df_delivered)
+            """
             timer(2)
             self.fn()
         except Exception as e:
             logging.error(f"{e} in run")
+
+
+"""
+
+    def remove_me(self):
+        # Create a copy with only last rows per symbol
+        df_latest = (
+            self.df_delivered.groupby("Symbol", as_index=False)
+            .tail(1)
+            .reset_index(drop=True)
+        )
+        for idx, row in df_latest.iterrows():
+            rows_to_drop, lst_of_dct = [], []
+            Ltp = row["Ltp"]
+            if Ltp >= row["Stoploss"]:
+                resp = Helper.place_order(
+                    symbol=row["Symbol"],
+                    exchange=row["Exch"],
+                    quantity=row["Qty"],
+                    side="SELL",
+                )
+                if resp:
+                    dct = {
+                        "Symbol": row["Symbol"],
+                        "Qty": row["Qty"],
+                        "Bdate": row["Bdate"],
+                        "Bprice": row["Bprice"],
+                        "Stoploss": row["Stoploss"],
+                        "SDate": pdlm.now(),
+                        "SPrice": Ltp,
+                        "Exch": row["Exch"],
+                    }
+                    # to be added to the history
+                    lst_of_dct.append(dct)
+                    # to be dropped from delivered
+                    rows_to_drop.append(idx)
+
+            if lst_of_dct and rows_to_drop:
+                # if lst_of dct
+                df_new = pd.DataFrame(lst_of_dct, columns=HIST_COLS)
+                df_new.to_csv(HISTORY, mode="a", index=False, header=False)
+                # if rows_to_drop:
+                self.df_delivered.drop(rows_to_drop, inplace=True)
+                self.save_dfs()
+
+"""
