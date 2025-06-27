@@ -8,8 +8,6 @@ from typing import Any, Dict, List
 from wsocket import Wsocket
 import pandas as pd
 
-from typing import List, Dict, Any
-import pandas as pd
 
 def get_tokens_from_symbols(obj) -> List[Dict[Any, Any]]:
     """
@@ -22,9 +20,13 @@ def get_tokens_from_symbols(obj) -> List[Dict[Any, Any]]:
     df2 = obj.df_delivered
 
     # Extract only common relevant columns
-    common_cols = ['Symbol', 'Exch']
-    df1_filtered = df1[common_cols] if not df1.empty else pd.DataFrame(columns=common_cols)
-    df2_filtered = df2[common_cols] if not df2.empty else pd.DataFrame(columns=common_cols)
+    common_cols = ["Symbol", "Exch"]
+    df1_filtered = (
+        df1[common_cols] if not df1.empty else pd.DataFrame(columns=common_cols)
+    )
+    df2_filtered = (
+        df2[common_cols] if not df2.empty else pd.DataFrame(columns=common_cols)
+    )
 
     # Combine both
     df_combined = pd.concat([df1_filtered, df2_filtered], ignore_index=True)
