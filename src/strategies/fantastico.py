@@ -217,8 +217,7 @@ class Fantastico:
         # update dataframe with price from dictionary with df.index as key
         try:
             self._prices = prices
-            print("\n DELIVERED")
-            print(self.df_delivered)
+            print("\n DELIVERED {self.df_delivered} \n")
             timer(2)
             self.fn()
         except Exception as e:
