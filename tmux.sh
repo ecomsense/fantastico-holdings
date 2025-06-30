@@ -28,6 +28,6 @@ else
   "$GIT" reset --hard && "$GIT" pull
   echo "Creating and attaching to session $sess."
   "$TMUX" new-session -d -s "$sess"
-  "$TMUX" send-keys -t "$sess" "cd src && $PYTHON main.py && $TMUX kill-session -t $sess" C-m
+  "$TMUX" send-keys -t "$sess" "export PYTHONPATH=\$(pwd) && cd src && $PYTHON main.py && $TMUX kill-session -t $sess" C-m
   "$TMUX" attach -t "$sess"
 fi
