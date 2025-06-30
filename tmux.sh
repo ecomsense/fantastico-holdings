@@ -1,5 +1,9 @@
 #!/bin/env sh
 
+# Get the directory of the script and cd into it
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$SCRIPT_DIR" || exit 1
+
 # Dynamically resolve full paths
 TMUX=$(command -v tmux)
 PYTHON=$(command -v python3)
@@ -24,6 +28,6 @@ else
   "$GIT" reset --hard && "$GIT" pull
   echo "Creating and attaching to session $sess."
   "$TMUX" new-session -d -s "$sess"
-  "$TMUX" send-keys -t "$sess" "$PYTHON main.py && $TMUX kill-session -t $sess" C-m
+  "$TMUX" send-keys -t "$sess" "cd src && $PYTHON main.py && $TMUX kill-session -t $sess" C-m
   "$TMUX" attach -t "$sess"
 fi
