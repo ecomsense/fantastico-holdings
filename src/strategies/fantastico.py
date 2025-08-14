@@ -53,7 +53,7 @@ class Fantastico:
 
         # stocks taken delivery
         self.df_delivered = pd.read_csv(DELIVERED)
-        logging.info("\n DELIVERED \n" + self.df_delivered + "\n")
+        logging.info(f"\n DELIVERED \n {self.df_delivered} \n")
         timer(5)
 
         # if no stocks to buy jump to processing bought stocks
