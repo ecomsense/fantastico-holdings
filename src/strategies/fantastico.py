@@ -3,6 +3,7 @@ import pandas as pd
 from helper import Helper
 from toolkit.kokoo import timer
 import pendulum as pdlm
+from traceback import print_exc
 
 COLS_DELIVERED = ["Symbol", "Qty", "Bdate", "Bprice", "Stoploss", "Ltp", "Exch"]
 HIST_COLS = [
@@ -37,7 +38,7 @@ class Fantastico:
         stocks_columns = ["Exch", "Qty"]
         self.df_stocks_in_play = df_fm_file(STOCKS_IN_PLAY, stocks_columns)
         self.df_stocks_in_play["Ltp"] = 0
-        print("FROM EXCEL \n", self.df_stocks_in_play, "\n")
+        logging.info("FROM EXCEL \n" + self.df_stocks_in_play + "\n")
         timer(5)
 
         # read stocks delivered if it is not in stocks to buy
@@ -47,12 +48,12 @@ class Fantastico:
             ~self.df_stocks_in_play.index.isin(lst_pos)
         ]
         if not self.df_stocks_in_play.empty:
-            print("\n NEW STOCK TO ENTER \n", self.df_stocks_in_play, "\n")
+            logging.info("\n NEW STOCK TO ENTER \n" + self.df_stocks_in_play + "\n")
             timer(5)
 
         # stocks taken delivery
         self.df_delivered = pd.read_csv(DELIVERED)
-        print("\n DELIVERED \n", self.df_delivered, "\n")
+        logging.info("\n DELIVERED \n" + self.df_delivered + "\n")
         timer(5)
 
         # if no stocks to buy jump to processing bought stocks
@@ -91,7 +92,7 @@ class Fantastico:
                 self.df_delivered = pd.read_csv(DELIVERED)
 
         except Exception as e:
-            print(f"{e} enter on breakout")
+            logging.error(f"{e} enter on breakout")
 
     def _append_list_to_csv(self, lst_of_dct):
         df = pd.DataFrame(lst_of_dct, columns=COLS_DELIVERED)
@@ -210,14 +211,15 @@ class Fantastico:
                 rows_to_add = self.enter_on_loss()
                 self.append_df_to_delivered(rows_to_add)
         except Exception as e:
-            print(f"{e} process cns")
+            logging.error(f"{e} process cns")
+            print_exc()
 
     def run(self, prices):
         # update df stocks in play and df_delivered with prices
         # update dataframe with price from dictionary with df.index as key
         try:
             self._prices = prices
-            print(f"\n DELIVERED {self.df_delivered} \n")
+            logging.info(f"\n DELIVERED {self.df_delivered} \n")
             timer(2)
             self.fn()
         except Exception as e:

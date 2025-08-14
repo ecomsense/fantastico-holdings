@@ -56,25 +56,29 @@ def change_key(ltps):
 
 
 def subscribe(lst_of_symbols):
-    Helper.symbol_info = {
-        dct["instrument_token"]: dct["tradingsymbol"] for dct in lst_of_symbols
-    }
-    tokens = list(Helper.symbol_info.keys())
+    try:
+        Helper.symbol_info = {
+            dct["instrument_token"]: dct["tradingsymbol"] for dct in lst_of_symbols
+        }
+        tokens = list(Helper.symbol_info.keys())
 
-    ws = Wsocket(Helper.api(), tokens)
-    prices = {}
-    while not any(prices):
-        prices = ws.ltp(tokens)
-        timer(1)
-        print("waiting for websocket")
-    return ws
+        ws = Wsocket(Helper.api(), tokens)
+        prices = {}
+        while not any(prices):
+            prices = ws.ltp(tokens)
+            timer(1)
+            logging.info("waiting for websocket")
+        return ws
+    except Exception as e:
+        logging.error(f"{e} in subscribe")  
+        print_exc()
 
 
 def main():
     try:
         start = O_SETG["program"].pop("start")
         while not is_time_past(start):
-            print(f"waiting for {start}")
+            logging.info(f"waiting for {start}")
             blink()
         else:
             logging.info("Happy Trading")
@@ -93,6 +97,7 @@ def main():
             kill_tmux()
     except KeyboardInterrupt:
         print("saving ....")
+        logging.info("user pressed ctrl+c")
         obj.save_dfs()
         timer(5)
     except Exception as e:
