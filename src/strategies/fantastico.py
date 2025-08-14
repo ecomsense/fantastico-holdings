@@ -38,7 +38,7 @@ class Fantastico:
         stocks_columns = ["Exch", "Qty"]
         self.df_stocks_in_play = df_fm_file(STOCKS_IN_PLAY, stocks_columns)
         self.df_stocks_in_play["Ltp"] = 0
-        logging.info("FROM EXCEL \n" + self.df_stocks_in_play + "\n")
+        logging.info(f"FROM EXCEL \n  {self.df_stocks_in_play}  \n")
         timer(5)
 
         # read stocks delivered if it is not in stocks to buy
@@ -150,9 +150,11 @@ class Fantastico:
                         rows_to_add.append(dct)
                         return rows_to_add
 
-            logging.info(
-                f"{symbol} - LTP {ltp:.2f} above target {target:.2f} (Avg: {average:.2f}) → Not Reached"
+            msg =(
+                f"{symbol} - LTP {ltp:.2f} Target:{target:.2f} (Avg:{average:.2f}) → Not Reached"
             )
+            logging.info(msg)
+            print(msg)
         except Exception as e:
             logging.error(f"{e} while exiting on profit")
 
@@ -179,9 +181,11 @@ class Fantastico:
                 if self._place_buy_order(**dct):
                     rows_to_add.append(dct)
                     return rows_to_add
-            logging.info(
-                f"{row['Symbol']} - LTP {ltp:.2f} below stoploss {row['Stoploss']:.2f} Not Reached"
+            msg = (
+                f"{row['Symbol']} - LTP {ltp:.2f} below stoploss: {row['Stoploss']:.2f} Not Reached"
             )
+            logging.info(msg)
+            print(msg)
 
     def append_df_to_delivered(self, rows_to_add, symbol=None):
         if rows_to_add:
