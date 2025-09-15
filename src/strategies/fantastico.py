@@ -48,7 +48,7 @@ class Fantastico:
             ~self.df_stocks_in_play.index.isin(lst_pos)
         ]
         if not self.df_stocks_in_play.empty:
-            logging.info("\n NEW STOCK TO ENTER \n" + self.df_stocks_in_play + "\n")
+            logging.info(f"\n NEW STOCK TO ENTER \n {self.df_stocks_in_play}  \n")
             timer(5)
 
         # stocks taken delivery
