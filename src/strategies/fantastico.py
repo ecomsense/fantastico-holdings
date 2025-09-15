@@ -16,7 +16,7 @@ HIST_COLS = [
     "SPrice",
     "Exch",
 ]
-REWARD_PERC = 0.05  # 5 percent
+REWARD_PERC = 0.04  # 5 percent
 
 
 def df_fm_file(file, columns=[], index_col="Symbol"):
@@ -150,9 +150,7 @@ class Fantastico:
                         rows_to_add.append(dct)
                         return rows_to_add
 
-            msg =(
-                f"{symbol} - LTP {ltp:.2f} Target:{target:.2f} (Avg:{average:.2f}) → Not Reached"
-            )
+            msg = f"{symbol} - LTP {ltp:.2f} Target:{target:.2f} (Avg:{average:.2f}) → Not Reached"
             logging.info(msg)
             print(msg)
         except Exception as e:
@@ -181,9 +179,7 @@ class Fantastico:
                 if self._place_buy_order(**dct):
                     rows_to_add.append(dct)
                     return rows_to_add
-            msg = (
-                f"{row['Symbol']} - LTP {ltp:.2f} below stoploss: {row['Stoploss']:.2f} Not Reached"
-            )
+            msg = f"{row['Symbol']} - LTP {ltp:.2f} below stoploss: {row['Stoploss']:.2f} Not Reached"
             logging.info(msg)
             print(msg)
 
