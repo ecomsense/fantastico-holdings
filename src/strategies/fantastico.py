@@ -4,6 +4,7 @@ from helper import Helper
 from toolkit.kokoo import timer
 import pendulum as pdlm
 from traceback import print_exc
+import os
 
 COLS_DELIVERED = ["Symbol", "Qty", "Bdate", "Bprice", "Stoploss", "Ltp", "Exch"]
 HIST_COLS = [
@@ -86,6 +87,7 @@ class Fantastico:
                         "Symbol": idx,
                     }
                     lst_of_dct.append(dct)
+                    logging.info(f"NEW STOCK TO ENTER, {idx}, {Ltp}, {dct['Qty']}")
 
             if any(lst_of_dct):
                 self._append_list_to_csv(lst_of_dct)
@@ -114,9 +116,8 @@ class Fantastico:
             return True
         return False
 
-    def exit_on_profit(self, df: pd.DataFrame) -> bool:
+    def _exit_on_profit(self, df: pd.DataFrame) -> bool:
         try:
-            rows_to_add = []
             symbol = df["Symbol"].iloc[0]  # all rows are of same symbol
             total_qty = df["Qty"].sum()
             total_amount = (df["Bprice"] * df["Qty"]).sum()
@@ -136,7 +137,10 @@ class Fantastico:
                     df["SDate"] = pdlm.now()
                     df["SPrice"] = ltp
                     df.to_csv(HISTORY, mode="a", index=False, header=False)
+                    logging.info(f"exited on profit, {symbol}, {ltp}, -{total_qty}")
+                    return True
 
+                """
                     dct = {
                         "Exch": exch,
                         "Qty": df["Qty"].iloc[0],
@@ -149,12 +153,16 @@ class Fantastico:
                     if self._place_buy_order(**dct):
                         rows_to_add.append(dct)
                         return rows_to_add
+                        """
 
+        except Exception as a:
+            print(a)
+            logging.error(f"{a} while exiting on profit")
+        else:
             msg = f"{symbol} - LTP {ltp:.2f} Target:{target:.2f} (Avg:{average:.2f}) → Not Reached"
             logging.info(msg)
             print(msg)
-        except Exception as e:
-            logging.error(f"{e} while exiting on profit")
+            return False
 
     def enter_on_loss(self):
         # Create a copy with only last rows per symbol
@@ -176,11 +184,14 @@ class Fantastico:
                     "Ltp": ltp,
                     "Symbol": row["Symbol"],
                 }
-                if self._place_buy_order(**dct):
+                resp = self._place_buy_order(**dct)
+                if resp:
                     rows_to_add.append(dct)
+                    logging.info(
+                        f"entered on loss, {dct['Symbol']}, {dct['Bprice']}, {dct['Qty']}"
+                    )
                     return rows_to_add
             msg = f"{row['Symbol']} - LTP {ltp:.2f} below stoploss: {row['Stoploss']:.2f} Not Reached"
-            logging.info(msg)
             print(msg)
 
     def append_df_to_delivered(self, rows_to_add, symbol=None):
@@ -195,33 +206,47 @@ class Fantastico:
             )
             self.save_dfs()
 
+    def delete_df_from_delivered(self, symbol):
+        self.df_delivered = self.df_delivered[self.df_delivered["Symbol"] != symbol]
+        self.save_dfs()
+
     def process_cnc(self):
+        """
+        Processes the stocks in play and delivered
+        """
         try:
             if not self.df_delivered.empty:
+                # update delivered with prices
                 self.df_delivered["Ltp"] = self.df_delivered["Symbol"].map(self._prices)
 
-                # exit positions
+                # generate unique symbols
                 symbols = self.df_delivered["Symbol"].unique()
                 for symbol in symbols:
+                    # create unique symbol dataframes
                     df_sym = self.df_delivered[self.df_delivered["Symbol"] == symbol]
-                    rows_to_add = self.exit_on_profit(df_sym)
-                    self.append_df_to_delivered(rows_to_add, symbol=symbol)
+                    # try to exit on profit
+                    if self._exit_on_profit(df_sym):
+                        # if succeeds delete from delivered
+                        self.delete_df_from_delivered(symbol=symbol)
+                        timer(5)
 
-                # add position
+                # averaging the position
                 rows_to_add = self.enter_on_loss()
                 self.append_df_to_delivered(rows_to_add)
         except Exception as e:
-            logging.error(f"{e} process cns")
+            logging.error(f"{e} process cnc")
             print_exc()
 
     def run(self, prices):
         # update df stocks in play and df_delivered with prices
         # update dataframe with price from dictionary with df.index as key
         try:
+            flag = False
             self._prices = prices
-            logging.info(f"\n DELIVERED {self.df_delivered} \n")
+            print(f"\n DELIVERED {self.df_delivered} \n")
+            flag = self.fn()
             timer(2)
-            self.fn()
+            return flag
         except Exception as e:
             logging.error(f"{e} in run")
 

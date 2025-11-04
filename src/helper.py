@@ -13,7 +13,7 @@ def login():
         module_path = f"stock_brokers.{broker_name}.{broker_name}"
         broker_module = import_module(module_path)
 
-        logging.info(f"BrokerClass: {broker_module}")
+        logging.debug(f"BrokerClass: {broker_module}")
         # Get the broker class (assuming class name matches the broker name)
         BrokerClass = getattr(broker_module, broker_name.capitalize())
 
@@ -65,6 +65,7 @@ class Helper:
             message = f"helper error {e} while placing order"
             logging.error(message)
             print_exc()
+            __import__("sys").exit(1)
 
 
 if __name__ == "__main__":

@@ -7,6 +7,8 @@ from symbols import Equity
 from typing import Any, Dict, List
 from wsocket import Wsocket
 import pandas as pd
+from kiteconnect.exceptions import KiteException, OrderException
+import os
 
 
 def get_tokens_from_symbols(obj) -> List[Dict[Any, Any]]:
@@ -67,10 +69,10 @@ def subscribe(lst_of_symbols):
         while not any(prices):
             prices = ws.ltp(tokens)
             timer(1)
-            logging.info("waiting for websocket")
+            logging.debug("waiting for websocket")
         return ws
     except Exception as e:
-        logging.error(f"{e} in subscribe")  
+        logging.error(f"{e} in subscribe")
         print_exc()
 
 
@@ -81,7 +83,7 @@ def main():
             logging.info(f"waiting for {start}")
             blink()
         else:
-            logging.info("Happy Trading")
+            print("Happy Trading")
 
         Helper.api()
         obj = Fantastico()
